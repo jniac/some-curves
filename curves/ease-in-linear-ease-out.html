@@ -1,0 +1,37 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Ease In - Linear - Ease Out</title>
+    <style>
+      @import url(style/main.css);
+      @import url(style/layout.css);
+      body, svg {
+        position: fixed;
+        width: 100vw;
+        height: 100vh;
+      }
+      svg {
+        background-color: #eee;
+      }
+    </style>
+  </head>
+  <body>
+    <svg viewBox="-500 -500 1000 1000">
+      <g stroke="#ddd">
+        <line x1="400" x2="400" y1="-5000" y2="5000" />
+        <line x1="-5000" x2="5000" y1="-400" y2="-400" />
+      </g>
+      <g stroke="#999">
+        <line x1="-5000" x2="5000" />
+        <line y1="-5000" y2="5000" />
+      </g>
+    </svg>
+    <div id="ui">
+      <div id="p1" class="slider" data-params="@3 [0,10]"/>
+      <div id="p2" class="slider" data-params="@3 [0,10]"/>
+    </div>
+    <script type="module" src="ease-in-linear-ease-out.js"></script>
+  </body>
+</html>
