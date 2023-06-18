@@ -32,7 +32,34 @@ export const easeInLinearEaseOut = (x, p, q, s) => {
   return (x * w - p1 + p2) / a
 }
 
+const props = {
+  p: 3,
+  q: 3,
+  s: .5,
+}
+
+const fn = x => {
+  const { p, q, s } = props
+  return easeInLinearEaseOut(x, p, q, s)
+}
+
+const plot = () => {
+  main.plot('ease', fn, {
+    color: 'red',
+  })
+}
+
+plot()
+
 main.plot('linear', x => x)
-main.plot('ease', x => easeInLinearEaseOut(x, 3, 3, .5), {
-  color: 'red',
+
+main.sliders.P.onChange(p => {
+  props.p = p
+  plot()
 })
+
+main.sliders.Q.onChange(q => {
+  props.q = q
+  plot()
+})
+

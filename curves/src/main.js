@@ -1,6 +1,7 @@
 import { svgf } from './svgf.js'
 
-export const svg = document.querySelector('svg')
+const svg = document.querySelector('svg')
+const ui = document.querySelector('#ui')
 
 const scaleFactor = 400
 
@@ -17,7 +18,57 @@ const parseSliderParams = str => {
   return [value, min, max]
 }
 
-const ui = document.querySelector('#ui')
+class Observable {
+  #props = {
+    value: null,
+    valueOld: null,
+    valueMapper: null,
+    listeners: new Set(),
+  }
+  constructor(initialValue, { valueMapper = null } = {}) {
+    this.#props.value = initialValue
+  }
+  #callListeners() {
+    const { value, listeners } = this.#props
+    for (const listener of listeners) {
+      listener(value, this)
+    }
+  }
+  setValue(value) {
+    const { value: valueOld, valueMapper } = this.#props
+    if (valueMapper) {
+      value = valueMapper(value)
+    }
+    if (value === valueOld) {
+      return false
+    }
+    this.#props.valueOld = valueOld
+    this.#props.value = value
+    this.#callListeners()
+    return true
+  }
+  onChange(callback) {
+    this.#props.listeners.add(callback)
+    const destroy = () => {
+      this.#props.listeners.delete(callback)
+    }
+    return { destroy }
+  }
+  // Sugar-syntax:
+  get value() {
+    return this.#props.value
+  }
+  set value(value) {
+    this.setValue(value)
+  }
+  get valueOld() {
+    return this.#props.valueOld
+  }
+}
+
+/** @type {Record<string, Observable>} */
+const sliders = {}
+
 for (const div of ui.querySelectorAll('.slider')) {
   const paramsStr = div.dataset.params
   const [value, min, max] = parseSliderParams(paramsStr)
@@ -26,7 +77,15 @@ for (const div of ui.querySelectorAll('.slider')) {
   input.setAttribute('min', min.toString())
   input.setAttribute('max', max.toString())
   input.setAttribute('value', value.toString())
+  input.setAttribute('step', 'any')
   div.append(input)
+  const obs = new Observable(value, {
+    valueMapper: value => (value < min ? min : value > max ? max : value),
+  })
+  input.oninput = () => {
+    obs.setValue(Number.parseFloat(input.value))
+  }
+  sliders[div.id] = obs
 }
 
 /**
@@ -35,23 +94,24 @@ for (const div of ui.querySelectorAll('.slider')) {
  * @param {(x: number) => number} fn
  * @param {[min: number, max: number]} range
  */
-export const plot = (name, fn, {
-  range = [0, 1],
-  color = '#ccc',
-} = {}) => {
+const plot = (name, fn, { range = [0, 1], color = '#ccc' } = {}) => {
   const [min, max] = range
   const count = scaleFactor
-  const points = Array.from({ length: count + 1 }).map((_, index) => {
-    const t = min + (max - min) * index / count
-    let x = t
-    let y = fn(x)
-    x *= scaleFactor
-    y *= -scaleFactor
-    return `${x.toFixed(1)},${y.toFixed(1)}`
-  }).join(' ')
+  const points = Array.from({ length: count + 1 })
+    .map((_, index) => {
+      const t = min + ((max - min) * index) / count
+      let x = t
+      let y = fn(x)
+      x *= scaleFactor
+      y *= -scaleFactor
+      return `${x.toFixed(1)},${y.toFixed(1)}`
+    })
+    .join(' ')
   svgf(`polyline#${name}`, {
     stroke: color,
     fill: 'none',
     points,
   })
 }
+
+export { svg, ui, plot, sliders }
