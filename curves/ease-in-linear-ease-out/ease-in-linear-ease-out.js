@@ -3,10 +3,17 @@
  * a linear interval. The ease-in and ease-out curves use separate coefficient,
  * making very easy to transform a transition from ease in/out to a pure ease-in 
  * or ease-out.
+ * 
+ * The function is actually NOT optimized (could it be?) and involves from 4 to 5
+ * power (to compute internal threshold, and the output when x corresponds to
+ * the ease in or out phase).
+ * 
+ * https://jniac.github.io/some-curves/curves/ease-in-linear-ease-out/
  * https://www.desmos.com/calculator/3izcjwwok7
- * @param {number} x
- * @param {number} p
- * @param {number} q
+ * 
+ * @param {number} x The current transition value from 0 to 1.
+ * @param {number} p The "ease-in" coefficient.
+ * @param {number} q The "ease-out" coefficient.
  * @param {number} s The "linear" proportion (0: no linear, 1: full linear)
  */
 export const easeInLinearEaseOut = (x, p, q, s) => {
