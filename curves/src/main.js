@@ -1,3 +1,4 @@
+import { htmlf } from './htmlf.js'
 import { svgf } from './svgf.js'
 
 const svg = document.querySelector('svg')
@@ -47,7 +48,14 @@ class Observable {
     this.#callListeners()
     return true
   }
+  /**
+   * @param {(value: any, observable: Observable) => void} callback 
+   * @returns {boolean}
+   */
   onChange(callback) {
+    if (!callback) {
+      throw new Error(`invalid callback`)
+    }
     this.#props.listeners.add(callback)
     const destroy = () => {
       this.#props.listeners.delete(callback)
@@ -70,22 +78,43 @@ class Observable {
 const sliders = {}
 
 for (const div of ui.querySelectorAll('.slider')) {
-  const paramsStr = div.dataset.params
-  const [value, min, max] = parseSliderParams(paramsStr)
-  const input = document.createElement('input')
-  input.setAttribute('type', 'range')
-  input.setAttribute('min', min.toString())
-  input.setAttribute('max', max.toString())
-  input.setAttribute('value', value.toString())
-  input.setAttribute('step', 'any')
-  div.append(input)
-  const obs = new Observable(value, {
+  const { id } = div
+  const [value, min, max] = parseSliderParams(div.dataset.params)
+
+  htmlf('label', {
+    parent: div,
+    innerHTML: id,
+  })
+
+  const range = htmlf('input', {
+    parent: div,
+    type: 'range',
+    step: 'any',
+    min,
+    max,
+    value,
+  })
+
+  const text = htmlf('input', {
+    parent: div,
+    type: 'text',
+    value,
+  })
+  
+  const valueObs = new Observable(value, {
     valueMapper: value => (value < min ? min : value > max ? max : value),
   })
-  input.oninput = () => {
-    obs.setValue(Number.parseFloat(input.value))
+
+  valueObs.onChange(value => {
+    range.value = value.toString()
+    text.value = value.toFixed(2)
+  })
+
+  range.oninput = () => {
+    valueObs.setValue(Number.parseFloat(range.value))
   }
-  sliders[div.id] = obs
+
+  sliders[id] = valueObs
 }
 
 /**
@@ -114,4 +143,17 @@ const plot = (name, fn, { range = [0, 1], color = '#ccc' } = {}) => {
   })
 }
 
-export { svg, ui, plot, sliders }
+const vLine = (name, { x = .5, range = [0, 1], color = '#ccc' } = {}) => {
+  const [min, max] = range
+  svgf(`line#${name}`, {
+    'stroke': color,
+    'fill': 'none',
+    'x1': x * scaleFactor,
+    'x2': x * scaleFactor,
+    'y1': min * -scaleFactor,
+    'y2': max * -scaleFactor,
+    'stroke-dasharray': '1 1.5',
+  })
+}
+
+export { svg, ui, plot, sliders, vLine }
