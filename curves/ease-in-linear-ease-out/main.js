@@ -8,6 +8,7 @@ const props = {
   s: .5,
 }
 
+main.viewBox({ min: { x: 0, y: 0 }, max: { x: 1, y: 1 } })
 main.plot('linear', x => x)
 
 const plot = () => {

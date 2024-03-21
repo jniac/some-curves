@@ -49,17 +49,23 @@ export const svgf = (identifier, props) => {
     throw new Error('Oops')
   }
 
+  function camelToKebab(str) {
+    // Use a regular expression to insert a hyphen before all lowercase letters following an uppercase letter
+    return str.replace(/([a-z])([A-Z])/g, '$1-$2').toLowerCase()
+  }
+
   for (const key in attributeProps) {
     const rawValue = attributeProps[key]
+    const safeKey = camelToKebab(key)
     if (rawValue === null) {
-      element.removeAttributeNS(null, key)
+      element.removeAttributeNS(null, safeKey)
     } else if (typeof rawValue === 'object') {
       console.log('Oops', rawValue)
       throw new Error('Oops')
     } else {
       const strValue =
         typeof rawValue === 'number' ? rawValue.toFixed(precision) : rawValue
-      element.setAttributeNS(null, key, strValue)
+      element.setAttributeNS(null, safeKey, strValue)
     }
   }
 

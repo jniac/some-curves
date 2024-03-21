@@ -6,7 +6,24 @@ const ui = document.querySelector('#ui')
 
 const scaleFactor = 400
 
-svg.setAttributeNS(null, 'viewBox', '-100 -500 600 600')
+const viewBoxProps = {
+  min: { x: 0, y: 0 },
+  max: { x: 1, y: 1 },
+  margin: .25,
+}
+function viewBox({ min = { x: 0, y: 0 }, max = { x: 1, y: 1 }, margin = .25 } = {}) {
+  Object.assign(viewBoxProps, { min, max, margin })
+
+  const width = max.x - min.x
+  const height = max.y - min.y
+
+  const left = min.x - margin
+  const top = -min.y - height - margin
+
+  svg.setAttributeNS(null, 'viewBox', `${left * scaleFactor} ${top * scaleFactor} ${(width + 2 * margin) * scaleFactor} ${(height + 2 * margin) * scaleFactor}`)
+}
+
+viewBox()
 
 /**
  * @param {string} str
@@ -100,7 +117,7 @@ for (const div of ui.querySelectorAll('.slider')) {
     type: 'text',
     value,
   })
-  
+
   const valueObs = new Observable(value, {
     valueMapper: value => (value < min ? min : value > max ? max : value),
   })
@@ -121,11 +138,24 @@ for (const div of ui.querySelectorAll('.slider')) {
  *
  * @param {string} name
  * @param {(x: number) => number} fn
- * @param {[min: number, max: number]} range
+ * @param {Partial<{ range: [min: number, max: number], color: string, drawInsideMargin: boolean }>} options
  */
-const plot = (name, fn, { range = [0, 1], color = '#ccc' } = {}) => {
-  const [min, max] = range
-  const count = scaleFactor
+function plot(
+  name,
+  fn,
+  {
+    range = [0, 1],
+    color = '#ccc',
+    strokeWidth = 1,
+    drawInsideMargin = false,
+  } = {}) {
+  let [min, max] = range
+  if (drawInsideMargin) {
+    const { margin } = viewBoxProps
+    min -= margin
+    max += margin
+  }
+  const count = scaleFactor * (max - min)
   const points = Array.from({ length: count + 1 })
     .map((_, index) => {
       const t = min + ((max - min) * index) / count
@@ -138,6 +168,7 @@ const plot = (name, fn, { range = [0, 1], color = '#ccc' } = {}) => {
     .join(' ')
   svgf(`polyline#${name}`, {
     stroke: color,
+    strokeWidth,
     fill: 'none',
     points,
   })
@@ -156,4 +187,4 @@ const vLine = (name, { x = .5, range = [0, 1], color = '#ccc' } = {}) => {
   })
 }
 
-export { svg, ui, plot, sliders, vLine }
+export { svg, ui, plot, sliders, vLine, viewBox }
