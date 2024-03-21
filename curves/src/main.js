@@ -137,18 +137,32 @@ for (const div of ui.querySelectorAll('.slider')) {
 /**
  *
  * @param {string} name
- * @param {(x: number) => number} fn
- * @param {Partial<{ range: [min: number, max: number], color: string, drawInsideMargin: boolean }>} options
+ * @param {((x: number) => number) | ((x: number) => number)[]} fn
+ * @param {Partial<{ 
+ *   range: [min: number, max: number]
+ *   color: string
+ *   strokeWidth: number
+ *   drawInsideMargin: boolean
+ * }>} options
  */
-function plot(
-  name,
-  fn,
-  {
+function plot(name, fn, options = {}) {
+  if (Array.isArray(fn)) {
+    for (const [index, subFn] of [...fn.entries()].reverse()) {
+      const subOptions = { ...options }
+      if (Array.isArray(subOptions.color))
+        subOptions.color = subOptions.color[index]
+      if (Array.isArray(subOptions.strokeWidth))
+        subOptions.strokeWidth = subOptions.strokeWidth[index]
+      plot(`${name}-${index}`, subFn, subOptions)
+    }
+    return
+  }
+  const {
     range = [0, 1],
     color = '#ccc',
     strokeWidth = 1,
     drawInsideMargin = false,
-  } = {}) {
+  } = options
   let [min, max] = range
   if (drawInsideMargin) {
     const { margin } = viewBoxProps
